@@ -1,0 +1,26 @@
+name: Release Studio
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Build release assets
+        run: python3 studio_maintenance.py package --repo "$GITHUB_REPOSITORY" --version "${GITHUB_REF_NAME#v}"
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/YAO-design-studio-macOS.zip dist/studio-update.json dist/studio-update.zip \
+            --verify-tag --title "YAO-design-studio $GITHUB_REF_NAME" --generate-notes
